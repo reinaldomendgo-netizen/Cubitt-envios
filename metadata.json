@@ -1,0 +1,5 @@
+{
+  "name": "Cubitt Notification Generator",
+  "description": "Automated shipping notification generator for Cubitt. Converts shipment lists into formatted WhatsApp and Email messages.",
+  "requestFramePermissions": []
+}
