@@ -29,7 +29,7 @@ export const handler: Handler = async (event, context) => {
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_SECURE === 'true',
+      secure: process.env.SMTP_PORT === '465',
       auth: {
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
@@ -39,16 +39,19 @@ export const handler: Handler = async (event, context) => {
     const mailOptions = {
       from: process.env.SMTP_FROM || '"Cubitt Shipping" <no-reply@cubitt.com>',
       to: to,
-      subject: `Tu envío ya está en camino 🚚 | Guía #${guide}`,
-      text: `Hola ${name},\n\nTu pedido ha sido enviado. Adjunto encontrarás tu guía de envío.\n\nGracias por confiar en Cubitt.`,
+      subject: `Tu envío ya está en camino 🚚 | Cubitt`,
+      text: `Estimado/a ${name},\n\nNos complace informarle que su pedido ha sido despachado exitosamente.\n\nNúmero de guía: ${guide}\n\nAgradecemos sinceramente su confianza en Cubitt.\nTrabajamos cada día para ofrecerle la mejor experiencia posible.\n\nQuedamos atentos a cualquier consulta.\n\nCordialmente,\nEquipo Cubitt`,
       html: `
         <div style="font-family: sans-serif; color: #333;">
-          <h2>¡Hola ${name}! 👋</h2>
-          <p>Tu pedido ya está en camino.</p>
+          <p>Estimado/a ${name},</p>
+          <p>Nos complace informarle que su pedido ha sido despachado exitosamente.</p>
           <p><strong>Número de guía:</strong> ${guide}</p>
-          <p>Adjunto encontrarás el documento de tu guía de envío.</p>
+          <p>Agradecemos sinceramente su confianza en Cubitt.<br>
+          Trabajamos cada día para ofrecerle la mejor experiencia posible.</p>
+          <p>Quedamos atentos a cualquier consulta.</p>
           <br>
-          <p>Gracias por elegir Cubitt.</p>
+          <p>Cordialmente,<br>
+          Equipo Cubitt</p>
         </div>
       `,
       attachments: [

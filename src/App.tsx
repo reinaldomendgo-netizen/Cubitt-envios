@@ -62,83 +62,98 @@ export default function App() {
 
   const generatePDF = (row: ShipmentRow): string => {
     const doc = new jsPDF({
-      orientation: 'portrait',
+      orientation: 'landscape',
       unit: 'mm',
-      format: 'a6' // Shipping label size-ish
+      format: 'a6' // 148mm x 105mm
     });
+
+    const width = 148;
+    const height = 105;
 
     // Background
     doc.setFillColor(255, 255, 255);
-    doc.rect(0, 0, 105, 148, 'F');
+    doc.rect(0, 0, width, height, 'F');
 
     // Header / Logo area
     doc.setFillColor(0, 0, 0);
-    doc.rect(0, 0, 105, 25, 'F');
+    doc.rect(0, 0, width, 20, 'F');
     
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.text('CUBITT', 10, 16);
+    doc.text('CUBITT', 10, 13);
     
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text('SHIPPING SERVICE', 105 - 10, 16, { align: 'right' });
+    doc.text('SHIPPING SERVICE', width - 10, 13, { align: 'right' });
 
     // Main Content
     doc.setTextColor(0, 0, 0);
     
-    // Guide Number (Big)
-    doc.setFontSize(10);
-    doc.text('TRACKING NUMBER / NÚMERO DE GUÍA', 10, 40);
-    doc.setFontSize(22);
-    doc.setFont('courier', 'bold');
-    doc.text(row.guide || 'PENDING', 10, 50);
-
-    // Barcode placeholder -> Link button
-    doc.setFillColor(0, 0, 0);
-    doc.rect(10, 55, 85, 15, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.setFontSize(8);
-    doc.text('CONSULTA TU GUIA ACA', 52.5, 64, { align: 'center' });
-    doc.link(10, 55, 85, 15, { url: 'https://unoexpresspanama.com/' });
-    doc.setTextColor(0, 0, 0);
-
-    // Details Grid
-    doc.setDrawColor(200, 200, 200);
-    doc.line(10, 80, 95, 80);
-
+    // Left Column: Details
     // From
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.text('FROM / REMITENTE:', 10, 90);
+    doc.text('FROM / REMITENTE:', 10, 35);
     doc.setFont('helvetica', 'normal');
-    doc.text('Cubitt Logistics Center', 10, 95);
-    doc.text('Panama City, Panama', 10, 99);
+    doc.text('Cubitt Logistics Center', 10, 40);
+    doc.text('Panama City, Panama', 10, 44);
 
     // To
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'bold');
-    doc.text('TO / DESTINATARIO:', 10, 110);
-    doc.setFontSize(12);
-    doc.text(row.name || 'Valued Customer', 10, 116);
-    doc.setFontSize(8);
-    doc.text(row.email, 10, 121);
+    doc.text('TO / DESTINATARIO:', 10, 55);
+    doc.setFontSize(11);
+    doc.text(row.name || 'Valued Customer', 10, 61);
+    doc.setFontSize(7);
+    doc.text(row.email, 10, 66);
 
-    // Stamp (Apple Style - Clean Rectangular)
+    // Vertical Divider
+    doc.setDrawColor(200, 200, 200);
+    doc.line(70, 30, 70, 90);
+
+    // Right Column: Tracking
+    const rightColX = 75;
+    
+    doc.setFontSize(8);
+    doc.setTextColor(100, 100, 100);
+    doc.text('TRACKING NUMBER / NÚMERO DE GUÍA', rightColX, 35);
+    
+    doc.setFontSize(18);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('courier', 'bold');
+    doc.text(row.guide || 'PENDING', rightColX, 45);
+
+    // Call to action
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 0, 0);
+    doc.text('Copia tu número de guía y consúltalo acá:', rightColX, 60);
+
+    // Button/Link
+    doc.setFillColor(0, 0, 0);
+    doc.roundedRect(rightColX, 65, 60, 10, 1, 1, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(7);
+    doc.setFont('helvetica', 'bold');
+    doc.text('RASTREAR ENVÍO', rightColX + 30, 71.5, { align: 'center' });
+    doc.link(rightColX, 65, 60, 10, { url: 'https://unoexpresspanama.com/' });
+
+    // Stamp
     doc.setDrawColor(40, 205, 65); // Apple Green
     doc.setTextColor(40, 205, 65);
     doc.setLineWidth(0.5);
-    doc.roundedRect(72, 100, 28, 10, 2, 2, 'D'); // Rounded rectangle
+    doc.roundedRect(width - 35, 85, 25, 8, 2, 2, 'D');
     
-    doc.setFontSize(10);
+    doc.setFontSize(8);
     doc.setFont('helvetica', 'bold');
-    doc.text('ENVIADO', 86, 106.5, { align: 'center' });
+    doc.text('ENVIADO', width - 22.5, 90, { align: 'center' });
 
     // Footer
-    doc.setFontSize(7);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Generated on ${new Date().toLocaleDateString()}`, 10, 140);
-    doc.text('Thank you for choosing Cubitt.', 105 - 10, 140, { align: 'right' });
+    doc.setFontSize(6);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Generated on ${new Date().toLocaleDateString()}`, 10, 100);
+    doc.text('Thank you for choosing Cubitt.', width - 10, 100, { align: 'right' });
 
     return doc.output('datauristring');
   };
