@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Send, FileText, Loader2, CheckCircle, AlertCircle, Package, RefreshCw } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 
 interface ShipmentRow {
   id: number;
@@ -24,6 +24,12 @@ export default function App() {
   );
   const [isGlobalSending, setIsGlobalSending] = useState(false);
   const [configStatus, setConfigStatus] = useState<'checking' | 'ok' | 'error'>('checking');
+  const rowsRef = useRef(rows);
+
+  // Keep rowsRef in sync with rows for async access
+  useEffect(() => {
+    rowsRef.current = rows;
+  }, [rows]);
 
   useEffect(() => {
     checkConfig();
@@ -188,13 +194,12 @@ export default function App() {
         })
       });
 
-      // Handle non-JSON responses safely
       const text = await response.text();
       let data;
       try {
         data = JSON.parse(text);
       } catch (e) {
-        throw new Error('Respuesta inválida del servidor (posible error de red o configuración)');
+        throw new Error('Respuesta inválida del servidor');
       }
 
       if (!response.ok) {
@@ -218,21 +223,29 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F7] font-sans text-[#1D1D1F]">
+    <div className="min-h-screen bg-[#F5F5F7] font-sans text-[#1D1D1F] relative overflow-hidden">
+      {/* Vibrant Mesh Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-rose-100 via-sky-100 to-violet-200 opacity-80" />
+      
+      {/* Ambient Background Blobs */}
+      <div className="absolute top-[-20%] left-[-10%] w-[60%] h-[60%] bg-blue-400/20 rounded-full blur-[120px] pointer-events-none mix-blend-multiply animate-pulse" />
+      <div className="absolute bottom-[-20%] right-[-10%] w-[60%] h-[60%] bg-purple-400/20 rounded-full blur-[120px] pointer-events-none mix-blend-multiply animate-pulse" />
+      <div className="absolute top-[40%] left-[40%] w-[40%] h-[40%] bg-pink-300/20 rounded-full blur-[100px] pointer-events-none mix-blend-multiply" />
+      
       {/* Apple-style Header */}
-      <header className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-slate-200">
+      <header className="bg-white/70 backdrop-blur-xl sticky top-0 z-50 border-b border-white/20 shadow-sm supports-[backdrop-filter]:bg-white/60">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Package className="text-black" size={20} />
-            <span className="font-semibold tracking-tight">Cubitt Dispatch</span>
+            <Package className="text-black/80" size={20} />
+            <span className="font-semibold tracking-tight text-black/90">Cubitt Dispatch</span>
             
             {/* Config Status Indicator */}
-            <div className={`ml-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border ${
+            <div className={`ml-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border backdrop-blur-md ${
               configStatus === 'ok' 
-                ? 'bg-green-50 text-green-700 border-green-200' 
+                ? 'bg-green-50/50 text-green-700 border-green-200/50' 
                 : configStatus === 'error' 
-                  ? 'bg-red-50 text-red-700 border-red-200'
-                  : 'bg-slate-50 text-slate-600 border-slate-200'
+                  ? 'bg-red-50/50 text-red-700 border-red-200/50'
+                  : 'bg-slate-50/50 text-slate-600 border-slate-200/50'
             }`}>
               <div className={`w-2 h-2 rounded-full ${
                 configStatus === 'ok' ? 'bg-green-500' : configStatus === 'error' ? 'bg-red-500' : 'bg-slate-400'
@@ -241,140 +254,141 @@ export default function App() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <button 
-              onClick={sendAll}
-              disabled={isGlobalSending}
-              className="bg-[#0071E3] hover:bg-[#0077ED] text-white text-sm font-medium px-4 py-1.5 rounded-full transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-            >
-              {isGlobalSending ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-              Enviar Todos
-            </button>
+            {/* Header actions if needed */}
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-semibold tracking-tight text-[#1D1D1F] mb-3">
-            Notificaciones de Envío
-          </h1>
-          <p className="text-[#86868B] text-lg max-w-2xl mx-auto">
-            Completa los detalles para generar guías de envío y notificar a los clientes por correo.
-          </p>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-          {/* Table Header */}
-          <div className="grid grid-cols-12 gap-4 p-4 border-b border-slate-100 bg-slate-50/50 text-xs font-semibold text-[#86868B] uppercase tracking-wider">
-            <div className="col-span-3 pl-2">Nombre del Cliente</div>
-            <div className="col-span-4">Correo Electrónico</div>
-            <div className="col-span-3">Número de Guía</div>
-            <div className="col-span-2 text-center">Acciones</div>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative z-10">
+        
+        <div className="bg-white/60 backdrop-blur-2xl rounded-[2rem] shadow-xl p-8 border border-white/40 ring-1 ring-white/50">
+          <div className="flex items-center justify-between mb-8">
+            <h1 className="text-2xl font-bold tracking-tight text-[#1D1D1F] uppercase drop-shadow-sm">
+              Notificaciones de Envío
+            </h1>
+            <button 
+              onClick={sendAll}
+              disabled={isGlobalSending}
+              className="bg-[#0071E3]/90 hover:bg-[#0077ED] text-white text-sm font-medium px-6 py-2.5 rounded-full shadow-lg shadow-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 backdrop-blur-sm"
+            >
+              {isGlobalSending ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+              Enviar Todos
+            </button>
           </div>
 
-          {/* Rows */}
-          <div className="divide-y divide-slate-100">
-            {rows.map((row) => (
-              <motion.div 
-                key={row.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: row.id * 0.05 }}
-                className="grid grid-cols-12 gap-4 p-4 items-center group hover:bg-slate-50 transition-colors"
-              >
-                {/* Name Input */}
-                <div className="col-span-3">
-                  <input
-                    type="text"
-                    placeholder="Juan Pérez"
-                    value={row.name}
-                    onChange={(e) => handleInputChange(row.id, 'name', e.target.value)}
-                    className="w-full bg-transparent border-none p-2 text-[15px] placeholder:text-slate-300 focus:ring-0 focus:placeholder:text-slate-400 transition-all rounded-lg hover:bg-white focus:bg-white focus:shadow-sm"
-                  />
-                </div>
+          <div className="overflow-hidden">
+            {/* Table Header */}
+            <div className="grid grid-cols-12 gap-6 p-4 border-b border-black/5 text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <div className="col-span-3 pl-2">Nombre del Cliente</div>
+              <div className="col-span-4">Correo Electrónico</div>
+              <div className="col-span-3">Número de Guía</div>
+              <div className="col-span-2 text-center">Acciones</div>
+            </div>
 
-                {/* Email Input */}
-                <div className="col-span-4">
-                  <input
-                    type="email"
-                    placeholder="juan@ejemplo.com"
-                    value={row.email}
-                    onChange={(e) => handleInputChange(row.id, 'email', e.target.value)}
-                    className="w-full bg-transparent border-none p-2 text-[15px] placeholder:text-slate-300 focus:ring-0 focus:placeholder:text-slate-400 transition-all rounded-lg hover:bg-white focus:bg-white focus:shadow-sm"
-                  />
-                </div>
+            {/* Rows */}
+            <div id="clientes" className="divide-y divide-black/5">
+              {rows.map((row) => (
+                <motion.div 
+                  key={row.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: row.id * 0.05 }}
+                  className="grid grid-cols-12 gap-6 p-6 items-center group hover:bg-white/40 transition-colors rounded-xl"
+                >
+                  {/* Name Input */}
+                  <div className="col-span-3">
+                    <input
+                      type="text"
+                      placeholder="Juan Pérez"
+                      value={row.name}
+                      onChange={(e) => handleInputChange(row.id, 'name', e.target.value)}
+                      className="nombre w-full bg-transparent border-b border-transparent focus:border-slate-400/50 p-2 text-[15px] font-medium text-slate-800 placeholder:text-slate-400 focus:ring-0 transition-all"
+                    />
+                  </div>
 
-                {/* Guide Input */}
-                <div className="col-span-3">
-                  <input
-                    type="text"
-                    placeholder="CUB-XXXXXX"
-                    value={row.guide}
-                    onChange={(e) => handleInputChange(row.id, 'guide', e.target.value)}
-                    className="w-full bg-transparent border-none p-2 text-[15px] font-mono text-slate-600 placeholder:text-slate-300 focus:ring-0 focus:placeholder:text-slate-400 transition-all rounded-lg hover:bg-white focus:bg-white focus:shadow-sm"
-                  />
-                </div>
+                  {/* Email Input */}
+                  <div className="col-span-4">
+                    <input
+                      type="email"
+                      placeholder="juan@ejemplo.com"
+                      value={row.email}
+                      onChange={(e) => handleInputChange(row.id, 'email', e.target.value)}
+                      className="w-full bg-transparent border-b border-transparent focus:border-slate-400/50 p-2 text-[15px] text-slate-600 placeholder:text-slate-400 focus:ring-0 transition-all"
+                    />
+                  </div>
 
-                {/* Actions */}
-                <div className="col-span-2 flex items-center justify-center gap-2">
-                  {row.status === 'idle' && (
-                    <>
-                      <button
-                        onClick={() => previewPDF(row)}
-                        disabled={!row.name || !row.guide}
-                        className="p-2 text-slate-400 hover:text-[#0071E3] hover:bg-blue-50 rounded-full transition-colors disabled:opacity-30"
-                        title="Ver PDF"
-                      >
-                        <FileText size={18} />
-                      </button>
-                      <button
-                        onClick={() => sendEmail(row)}
-                        disabled={!row.email || !row.name || !row.guide}
-                        className="p-2 text-slate-400 hover:text-[#0071E3] hover:bg-blue-50 rounded-full transition-colors disabled:opacity-30"
-                        title="Enviar Correo"
-                      >
-                        <Send size={18} />
-                      </button>
-                    </>
-                  )}
-                  
-                  {row.status === 'sending' && (
-                    <Loader2 size={20} className="text-[#0071E3] animate-spin" />
-                  )}
-                  
-                  {row.status === 'success' && (
-                    <div className="flex items-center gap-1 text-green-600">
-                      <CheckCircle size={20} />
-                      <span className="text-xs font-medium">Enviado</span>
-                    </div>
-                  )}
+                  {/* Guide Input */}
+                  <div className="col-span-3">
+                    <input
+                      type="text"
+                      placeholder="00XXXXXXX"
+                      value={row.guide}
+                      onChange={(e) => handleInputChange(row.id, 'guide', e.target.value)}
+                      className="guia w-full bg-transparent border-b border-transparent focus:border-slate-400/50 p-2 text-[15px] font-mono text-slate-500 placeholder:text-slate-400 focus:ring-0 transition-all uppercase"
+                    />
+                  </div>
 
-                  {row.status === 'error' && (
-                    <div className="flex items-center gap-2">
-                      <div className="group/error relative">
-                        <AlertCircle size={20} className="text-red-500 cursor-help" />
-                        <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-red-50 text-red-600 text-xs rounded-lg shadow-lg opacity-0 group-hover/error:opacity-100 pointer-events-none z-10 border border-red-100">
-                          {row.errorMessage || 'Error al enviar'}
-                        </div>
+                  {/* Actions */}
+                  <div className="col-span-2 flex items-center justify-center gap-3">
+                    {row.status === 'idle' && (
+                      <>
+                        <button
+                          onClick={() => previewPDF(row)}
+                          disabled={!row.name || !row.guide}
+                          className="p-2.5 text-slate-500 hover:text-slate-700 hover:bg-white/60 rounded-full transition-colors disabled:opacity-30 backdrop-blur-sm"
+                          title="Ver PDF"
+                        >
+                          <FileText size={18} strokeWidth={1.5} />
+                        </button>
+                        <button
+                          onClick={() => sendEmail(row)}
+                          disabled={!row.email || !row.name || !row.guide}
+                          className="p-2.5 text-slate-500 hover:text-[#0071E3] hover:bg-blue-50/50 rounded-full transition-colors disabled:opacity-30 backdrop-blur-sm"
+                          title="Enviar Correo"
+                        >
+                          <Send size={18} strokeWidth={1.5} />
+                        </button>
+                      </>
+                    )}
+                    
+                    {row.status === 'sending' && (
+                      <Loader2 size={20} className="text-[#0071E3] animate-spin" />
+                    )}
+                    
+                    {row.status === 'success' && (
+                      <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50/60 border border-emerald-100/50 px-3 py-1 rounded-full backdrop-blur-sm">
+                        <CheckCircle size={14} />
+                        <span className="text-xs font-semibold uppercase tracking-wide">Enviado</span>
                       </div>
-                      <button
-                        onClick={() => resetRow(row.id)}
-                        className="p-1.5 text-slate-400 hover:text-[#0071E3] hover:bg-blue-50 rounded-full transition-colors"
-                        title="Reintentar / Editar"
-                      >
-                        <RefreshCw size={16} />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </motion.div>
-            ))}
+                    )}
+
+                    {row.status === 'error' && (
+                      <div className="flex items-center gap-2">
+                        <div className="group/error relative">
+                          <AlertCircle size={20} className="text-red-400 cursor-help" />
+                          <div className="absolute right-0 top-full mt-2 w-64 p-3 bg-white/90 backdrop-blur-xl text-red-600 text-xs rounded-xl shadow-xl border border-red-100 opacity-0 group-hover/error:opacity-100 pointer-events-none z-10">
+                            {row.errorMessage || 'Error al enviar'}
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => resetRow(row.id)}
+                          className="p-2 text-slate-400 hover:text-[#0071E3] hover:bg-white/60 rounded-full transition-colors"
+                          title="Reintentar / Editar"
+                        >
+                          <RefreshCw size={16} />
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           </div>
         </div>
 
         <div className="mt-8 text-center">
-          <p className="text-xs text-[#86868B]">
-            Asegúrate de configurar las variables SMTP en el entorno para habilitar el envío de correos.
+          <p className="text-xs text-slate-400 font-medium tracking-wide uppercase drop-shadow-sm">
+            Sistema de Notificaciones Cubitt Dispatch
           </p>
         </div>
       </main>
